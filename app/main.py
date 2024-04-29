@@ -48,6 +48,7 @@ def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
 
 # 主函数，执行图片处理
 def main(path):
+    print('Processing image:', path)
     # 获取切图标注，切图图片，原图图图片
     all_mark_boxs, all_char_imgs, img_o = ImageCutting.divImg(path, save=False)
 
@@ -92,6 +93,7 @@ def main(path):
     # 将写满结果的原图保存
     result_image_path = os.path.join(os.path.dirname(path), os.path.basename(path).split('.')[0] + '_Result.png')
     cv2.imwrite(result_image_path, img_o)
+    print('Result image saved:', result_image_path)
     return result_image_path
 
 @app.route('/process_image', methods=['POST'])
@@ -103,14 +105,17 @@ def process_image():
         # 保存图像文件到临时文件夹
         img_path = 'temp_image.png'
         file.save(img_path)
+        print('Uploaded image saved to:', img_path)
         
         # 调用处理函数处理图像
         result_image_path = main(img_path)
         
         # 返回处理后的图像文件
+        print('Sending result image:', result_image_path)
         return send_file(result_image_path, mimetype='image/png')
     except Exception as e:
+        print('Error processing image:', str(e))
         return jsonify({'code': 500, 'msg': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 80)))
+    app.run(debug=True, host='0.0.0.0', port=80)
