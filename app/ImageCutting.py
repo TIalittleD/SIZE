@@ -183,8 +183,6 @@ def divImg(img_path, save_file=False):
     # 计算投影，并截取整个图片的行
     img_y_shadow_a = img_y_shadow(img_b)
 
-    show_shadow(img_y_shadow_a,"y")
-
     row_mark_boxs = img2rows(img_y_shadow_a, img_w, img_h)
     # 切行的图片，切的是灰图原图
     row_imgs = cut_img(img, row_mark_boxs)
@@ -200,8 +198,6 @@ def divImg(img_path, save_file=False):
         # 图像膨胀6次
         row_img_b_d = cv2.dilate(row_img_b, kernel, iterations=6)
         img_x_shadow_a = img_x_shadow(row_img_b_d)
-
-        show_shadow(img_x_shadow_a,"x")
 
         block_mark_boxs = row2blocks(img_x_shadow_a, row_img_w, row_img_h)
         row_char_boxs = []
@@ -236,27 +232,3 @@ def divImg(img_path, save_file=False):
         all_char_imgs.append(row_char_imgs)
 
     return all_mark_boxs, all_char_imgs, img_o
-
-# 展示投影图
-def show_shadow(arr, direction='x'):
-    a_max = max(arr)
-    if direction == 'x':  # x轴方向的投影
-        a_shadow = np.zeros((a_max, len(arr)), dtype=int)
-        for i in range(0, len(arr)):
-            if arr[i] == 0:
-                continue
-            for j in range(0, arr[i]):
-                a_shadow[j][i] = 255
-    elif direction == 'y':  # y轴方向的投影
-        a_shadow = np.zeros((len(arr), a_max), dtype=int)
-        for i in range(0, len(arr)):
-            if arr[i] == 0:
-                continue
-            for j in range(0, arr[i]):
-                a_shadow[i][j] = 255
-    img_show_array(a_shadow)
-
-# 展示图片，数组展示方式
-def img_show_array(a):
-    plt.imshow(a)
-    plt.show()
