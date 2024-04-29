@@ -1,26 +1,12 @@
-import os
-
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route('/')
-def hello_world():
-    return '欢迎使用微信云托管！'
-
-if __name__ == "__main__":
-    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 80)))
-	
-# 导入所需的库
-from PIL import Image, ImageDraw, ImageFont  # 用于图像处理和绘图
+from flask import Flask, request, jsonify
+from PIL import Image
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt  # 用于图像展示
-import time  # 用于计时
-from collections import Counter  # 用于计数
-import CNN_Model  # 自定义的模型，用于字符识别
-import ImageCutting  # 用于图像切割
+import time
+import CNN_Model
+import ImageCutting
 
+app = Flask(__name__)
 
 # 计算数值并返回结果
 def calculation(chars):
@@ -50,7 +36,6 @@ def calculation(chars):
             #     result = c_r
     return result
 
-
 # 绘制文本
 def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
     if (isinstance(img, np.ndarray)):  # 判断是否OpenCV图片类型
@@ -63,7 +48,6 @@ def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
     draw.text((left, top), text, textColor, font=fontStyle)
     # 转换回OpenCV格式
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
-
 
 # 主函数，执行图片处理
 def main(path, save=False):
@@ -111,10 +95,25 @@ def main(path, save=False):
     # 将写满结果的原图保存
     f_name = path[:path.index(".")] + "_Result" + path[path.index("."):]
     cv2.imwrite(f_name, img_o)
-
+	
+@app.route('/process_image', methods=['POST'])
+def process_image():
+    try:
+        # 获取上传的图像文件
+        file = request.files['image']
+        
+        # 保存图像文件到临时文件夹
+        img_path = 'temp_image.png'
+        file.save(img_path)
+        
+        # 调用处理函数处理图像
+        result_image = main(img_path)
+        
+        # 返回处理后的图像文件
+        return send_file(result_image, mimetype='image/png')
+    except Exception as e:
+        return jsonify({'code': 500, 'msg': str(e)})
 
 if __name__ == '__main__':
-    t = time.time()
-    imgpath = "imgs/question2.png"
-    main(imgpath, True)  # 主程序入口
-    print(f'all take time:{time.time() - t:.4f}s')
+    app.run(debug=True, host='0.0.0.0', port=5000)
+
