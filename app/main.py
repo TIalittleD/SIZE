@@ -1,54 +1,123 @@
-from flask import Flask, render_template, request, jsonify
-from werkzeug.utils import secure_filename
-import os
-
-# 导入图像处理相关的函数
-from PIL import Image
+from flask import Flask, request, jsonify
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import cv2
-from CalculationAndDraw import main  # 替换成你的图像处理模块
+import time
+import CNN_Model
+import ImageCutting
+import os
 
+# 创建 Flask 应用
 app = Flask(__name__)
 
-# 设置上传文件存储目录
-UPLOAD_FOLDER = 'uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# 允许上传的文件类型
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
-# 检查文件类型是否允许
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# 首页，上传图片的界面
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# 图片处理接口
+# 上传图片并处理
 @app.route('/process_image', methods=['POST'])
 def process_image():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'})
-    file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'})
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        # 调用图像处理函数
-        main(filepath, save=True)  # 保存处理后的图片
-        # 返回处理后的图片路径
-        processed_filename = 'processed_' + filename
-        processed_filepath = os.path.join(app.config['UPLOAD_FOLDER'], processed_filename)
-        return jsonify({'processed_image': processed_filepath})
-    else:
-        return jsonify({'error': 'File type not allowed'})
+    # 检查是否有文件被上传
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image uploaded'})
 
+    # 获取上传的图片文件
+    file = request.files['image']
+
+    # 保存上传的图片文件到本地
+    img_path = os.path.join('uploads', file.filename)
+    file.save(img_path)
+
+    # 处理图片
+    result_img_path = process_image_function(img_path)
+
+    # 返回处理后的结果图片路径
+    return jsonify({'result_image_path': result_img_path})
+
+# 图像处理函数
+def process_image_function(img_path):
+    # 图像处理
+    all_mark_boxs, all_char_imgs, img_o = ImageCutting.divImg(img_path, save=False)
+
+    # 恢复模型，用于图片识别
+    model = CNN_Model.create_custom_model((24, 24, 1), 15)
+    model.load_weights('checkpoint/char_checkpoint.weights.h5')
+    class_name = np.load('checkpoint/class_name.npy')
+
+    # 遍历行
+    for i in range(len(all_char_imgs)):
+        row_imgs = all_char_imgs[i]
+        # 遍历块
+        for j in range(len(row_imgs)):
+            block_imgs = row_imgs[j]
+            block_imgs = np.array(block_imgs)
+            # 图片识别
+            results = CNN_Model.predict(model, block_imgs, class_name)
+            print('recognize result:', results)
+            # 计算结果
+            result = calculation(results)
+            print('calculate result:', result)
+            # 获取块的标注坐标
+            block_mark = all_mark_boxs[i][j]
+            # 获取结果的坐标，写在块的最后一个字
+            answer_box = block_mark[-1]
+            # 计算最后一个字的位置
+            x = answer_box[2]
+            y = answer_box[3]
+            iw = answer_box[2] - answer_box[0]
+            ih = answer_box[3] - answer_box[1]
+            # 计算字体大小
+            textSize = max(iw, ih)
+            # 根据结果设置字体颜色
+            if str(result) == "√":
+                color = (0, 255, 0)
+            elif str(result) == "×":
+                color = (255, 0, 0)
+            else:
+                color = (192, 192, 192)
+            # 将结果写到原图上
+            img_o = cv2ImgAddText(img_o, str(result), answer_box[2], answer_box[1], color, textSize)
+
+    # 将写满结果的原图保存
+    result_img_path = img_path.replace('.png', '_result.png')
+    cv2.imwrite(result_img_path, img_o)
+
+    return result_img_path
+
+# 计算数值并返回结果
+def calculation(chars):
+    cstr = ''.join(chars)
+    c_r = ''
+    result = ''
+    if ("=" in cstr):  # 有等号
+        str_arr = cstr.split('=')
+        c_str = str_arr[0]
+        r_str = str_arr[1]
+        c_str = c_str.replace("×", "*")
+        c_str = c_str.replace("÷", "/")
+        try:
+            c_r = int(eval(c_str))
+        except Exception as e:
+            print("Exception", e)
+        if r_str == "":
+            result = c_r
+        else:
+            if str(c_r) == str(r_str):
+                result = "√"
+            else:
+                result = "×"
+    return result
+
+# 绘制文本
+def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
+    if (isinstance(img, np.ndarray)):  # 判断是否OpenCV图片类型
+        img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    # 创建一个可以在给定图像上绘图的对象
+    draw = ImageDraw.Draw(img)
+    # 字体的格式
+    fontStyle = ImageFont.truetype("Font\行者笔记简.ttf", textSize, encoding="utf-8")
+    # 绘制文本
+    draw.text((left, top), text, textColor, font=fontStyle)
+    # 转换回OpenCV格式
+    return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
+
+# 主函数，用于本地测试
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 80)))
+
