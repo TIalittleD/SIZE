@@ -40,7 +40,7 @@ def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
     # 创建一个可以在给定图像上绘图的对象
     draw = ImageDraw.Draw(img)
     # 字体的格式
-    fontStyle = ImageFont.truetype("Font/行者笔记简.ttf", textSize, encoding="utf-8")
+    fontStyle = ImageFont.truetype("Font/xingzhe.ttf", textSize, encoding="utf-8")
     # 绘制文本
     draw.text((left, top), text, textColor, font=fontStyle)
     # 转换回OpenCV格式
