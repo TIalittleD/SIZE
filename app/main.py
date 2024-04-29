@@ -6,7 +6,7 @@ import os
 from PIL import Image
 import numpy as np
 import cv2
-import   # 替换成你的图像处理模块
+from CalculationAndDraw import main  # 替换成你的图像处理模块
 
 app = Flask(__name__)
 
