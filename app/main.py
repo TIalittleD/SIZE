@@ -40,7 +40,8 @@ def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
     # 创建一个可以在给定图像上绘图的对象
     draw = ImageDraw.Draw(img)
     # 字体的格式
-    fontStyle = ImageFont.truetype("Font/xingzhe.ttf", textSize, encoding="utf-8")
+    font_path = os.path.join(os.path.dirname(__file__), "Font", "xingzhe.ttf")  # 字体文件路径
+    fontStyle = ImageFont.truetype(font_path, textSize, encoding="utf-8")
     # 绘制文本
     draw.text((left, top), text, textColor, font=fontStyle)
     # 转换回OpenCV格式
@@ -118,4 +119,4 @@ def process_image():
         return jsonify({'code': 500, 'msg': str(e)})
 
 if __name__ == "__main__":
-    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 80)))
+    app.run(debug=True, host='0.0.0.0', port=80)
