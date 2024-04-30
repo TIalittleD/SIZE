@@ -5,6 +5,25 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import ModelCheckpoint
 
+def create_custom_model(input_shape, num_classes):
+    model = models.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Rescaling(1. / 255),
+        layers.Conv2D(24, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Conv2D(32, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Conv2D(64, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Dropout(0.2),
+        layers.Flatten(),
+        layers.Dense(96, activation='relu'),
+        layers.Dense(num_classes)
+    ])
+    model.compile(optimizer='adam',
+                  loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+                  metrics=['accuracy'])
+    return model
 
 #预测
 def predict(model, imgs, class_name):
