@@ -1,4 +1,4 @@
-Flask==2.0.2
+Flask
 Pillow==10.1.0
 numpy==1.23.5
 opencv-python==4.5.3.56
