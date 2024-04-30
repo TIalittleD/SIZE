@@ -9,5 +9,3 @@ COPY ./app/tmp/requirements.txt /app/tmp/requirements.txt
 
 # 安装依赖
 RUN pip install --no-cache-dir -r /app/tmp/requirements.txt
-
-CMD ["python", "main.py"]
