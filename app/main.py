@@ -97,26 +97,7 @@ def main(path):
     print('Result image saved:', result_image_path)
     return result_image_path
 
-@app.route('/process_image', methods=['POST'])
-def process_image():
-    try:
-        # 获取上传的图像文件
-        file = request.files['image']
-        
-        # 保存图像文件到临时文件夹
-        img_path = 'temp_image.png'
-        file.save(img_path)
-        print('Uploaded image saved to:', img_path)
-        
-        # 调用处理函数处理图像
-        result_image_path = main(img_path)
-        
-        # 返回处理后的图像文件
-        print('Sending result image:', result_image_path)
-        return send_file(result_image_path, mimetype='image/png')
-    except Exception as e:
-        print('Error processing image:', str(e))
-        return jsonify({'code': 500, 'msg': str(e)})
+
 
 @app.route('/')
 def hello_world():
