@@ -5,4 +5,5 @@ FROM tiangolo/uwsgi-nginx-flask:python3.8
 COPY ./app /app
 
 # 安装应用程序所需的 Python 依赖项
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r /app/requirements.txt
