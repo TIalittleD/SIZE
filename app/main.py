@@ -35,12 +35,14 @@ def calculation(chars):
     return result
 
 # 主函数，执行图片处理
-def main(path, save=False):
-    all_mark_boxs, all_char_imgs, img_o = ImageCutting.divImg(path, save)
+def main(image_path):
+    all_mark_boxs, all_char_imgs, img_o = ImageCutting.divImg(image_path, save=True)
 
     model = CNN_Model.create_custom_model((24, 24, 1), 15)
     model.load_weights('checkpoint/char_checkpoint.weights.h5')
     class_name = np.load('checkpoint/class_name.npy')
+
+    results_list = []
 
     for i in range(0, len(all_char_imgs)):
         row_imgs = all_char_imgs[i]
@@ -49,37 +51,30 @@ def main(path, save=False):
             block_imgs = np.array(block_imgs)
             results = CNN_Model.predict(model, block_imgs, class_name)
             result = calculation(results)
-            block_mark = all_mark_boxs[i][j]
-            answer_box = block_mark[-1]
-            x = answer_box[2]
-            y = answer_box[3]
-            iw = answer_box[2] - answer_box[0]
-            ih = answer_box[3] - answer_box[1]
-            textSize = max(iw, ih)
-            if str(result) == "√":
-                color = (0, 255, 0)
-            elif str(result) == "×":
-                color = (255, 0, 0)
-            else:
-                color = (192, 192, 192)
-            img_o = cv2ImgAddText(img_o, str(result), answer_box[2], answer_box[1], color, textSize)
-    f_name = path[:path.index(".")] + "_Result" + path[path.index("."):]
-    cv2.imwrite(f_name, img_o)
-    return f_name
+            results_list.append(result)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        if 'image' not in request.files:
-            return render_template('index.html', message='未上传图片！')
-        image = request.files['image']
-        if image.filename == '':
-            return render_template('index.html', message='未选择图片！')
-        if image:
-            image.save('uploaded_image.png')
-            result_image_path = main('uploaded_image.png', save=True)
-            return render_template('index.html', message='处理完成！', result_image=result_image_path)
-    return render_template('index.html')
+    # 保存识别结果图像
+    result_image_path = image_path[:image_path.index(".")] + "_Result" + image_path[image_path.index("."):]
+    cv2.imwrite(result_image_path, img_o)
+
+    return result_image_path
+
+@app.route('/process_image', methods=['POST'])
+def process_image():
+    if 'image' not in request.files:
+        return jsonify({'error': '未上传图片！'})
+    
+    image = request.files['image']
+    
+    if image.filename == '':
+        return jsonify({'error': '未选择图片！'})
+    
+    if image:
+        image.save('uploaded_image.png')
+        result_image_path = main('uploaded_image.png')
+        return jsonify({'code': 200, 'result': result_image_path})
+    
+    return jsonify({'error': '未知错误！'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0',port=int(os.environ.get('PORT', 80)))
