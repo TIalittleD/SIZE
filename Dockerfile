@@ -10,7 +10,5 @@ WORKDIR /app
 # 安装应用的依赖
 RUN pip install --no-cache-dir -r /app/tmp/requirements.txt
 
-EXPOSE 8080
-
 # 定义容器启动时运行的命令为启动 app.py
 CMD ["python3", "app.py", "0.0.0.0", "8080"]
