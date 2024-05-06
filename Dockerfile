@@ -10,8 +10,8 @@ COPY ./app /app
 # 安装应用的依赖
 RUN pip install --no-cache-dir -r /app/tmp/requirements.txt
 
-# 声明容器运行时监听的端口为 80
-EXPOSE 80
+# 声明容器运行时监听的端口为 8080
+EXPOSE 8080
 
 # 定义容器启动时运行的命令为启动 app.py
 CMD ["python", "app.py"]
