@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,render_template
 from PIL import Image, ImageDraw, ImageFont
 import os
+import base64
 import numpy as np
 import cv2
 import CNN_Model
@@ -39,24 +40,15 @@ def cv2ImgAddText(img, text, left, top, textColor=(255, 0, 0), textSize=20):
     if (isinstance(img, np.ndarray)):
         img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(img)
-    fontStyle = ImageFont.truetype("Font/xingzhe.ttf", textSize, encoding="utf-8")
+    fontStyle = ImageFont.truetype("Font/行者笔记简.ttf", textSize, encoding="utf-8")
     draw.text((left, top), text, textColor, font=fontStyle)
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
-@app.route('/')
-def index():
-    return 'Welcome to the image processing service!'
+def process_image(img_bytes):
+    img_np = np.frombuffer(img_bytes, dtype=np.uint8)
+    img_cv2 = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
 
-@app.route('/process_image', methods=['POST'])
-def process_image():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image sent'})
-
-    image_file = request.files['image']
-    image = Image.open(image_file)
-    img_array = np.array(image)
-
-    all_mark_boxs, all_char_imgs, img_o = ImageCutting.divImg(img_array, False)
+    all_mark_boxs, all_char_imgs, img_o = ImageCutting.divImg(img_cv2, False)
     model = CNN_Model.create_custom_model((24, 24, 1), 15)
     model.load_weights('checkpoint/char_checkpoint.weights.h5')
     class_name = np.load('checkpoint/class_name.npy')
@@ -86,12 +78,33 @@ def process_image():
                 answer_text = f'({c_r})'
                 img_o = cv2ImgAddText(img_o, answer_text, answer_box[2] + iw, answer_box[1], color, int(textSize * 0.5))
 
-    f_name = "result_image.png"
-    cv2.imwrite(f_name, img_o)
+    ret, processed_img_bytes = cv2.imencode('.jpg', img_o)
+    return processed_img_bytes.tobytes()
 
-    return jsonify({'result_image': f_name})
 
+@app.route('/upload', methods=['POST'])
+def upload():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image sent'})
+
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'})
+
+    # 读取上传的图片文件的字节流
+    img_bytes = file.read()
+
+    # 处理上传的图像
+    processed_img_bytes = process_image(img_bytes)
+
+    # 将处理后的图像以 Base64 编码的方式返回给前端
+    processed_img_base64 = base64.b64encode(processed_img_bytes).decode('utf-8')
+
+    return jsonify({
+        'original_image': 'data:image/jpeg;base64,' + base64.b64encode(img_bytes).decode('utf-8'),
+        'processed_image': 'data:image/jpeg;base64,' + processed_img_base64
+    })
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 80)))
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 80)))
 
