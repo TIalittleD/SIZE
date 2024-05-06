@@ -36,4 +36,4 @@ def predict(model, imgs, class_name):
         index = np.argmax(predict)  # 寻找最大值
         result = class_name[index]  # 取出字符
         results.append(label_dict[int(result)])
-    return results
+    return result
