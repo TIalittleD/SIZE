@@ -82,6 +82,11 @@ def process_image(img_bytes):
     return processed_img_bytes.tobytes()
 
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'image' not in request.files:
