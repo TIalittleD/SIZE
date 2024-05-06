@@ -1,0 +1,54 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processing</title>
+</head>
+<body>
+    <div class="container">
+        <div class="image-container">
+            <div>原图</div>
+            <img id="originalImage" src="" alt="Original Image" style="max-width: 100%">
+        </div>
+        <div class="image-container">
+            <div>处理后的图像</div>
+            <img id="processedImage" src="" alt="Processed Image" style="max-width: 100%">
+        </div>
+        <input type="file" accept="image/*" onchange="previewImage(event)">
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function () {
+                const originalImage = document.getElementById('originalImage');
+                originalImage.src = reader.result;
+
+                // 发送图片给后端进行处理
+                const formData = new FormData();
+                formData.append('image', file);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const processedImage = document.getElementById('processedImage');
+                    processedImage.src = data.processed_image;
+                })
+                .catch(error => {
+                    console.error('Error:',error);
+                });
+            }
+
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
