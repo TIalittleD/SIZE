@@ -1,9 +1,7 @@
-import os
-import pathlib
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.callbacks import ModelCheckpoint
+
 
 def create_custom_model(input_shape, num_classes):
     model = models.Sequential([
@@ -24,6 +22,7 @@ def create_custom_model(input_shape, num_classes):
                   loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
                   metrics=['accuracy'])
     return model
+
 
 #预测
 def predict(model, imgs, class_name):
