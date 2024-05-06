@@ -173,14 +173,14 @@ def save_imgs(dir_name, imgs):
 
 
 # 图像切割，获取块的轮廓
-def divImg(img_path, save_file=False):
+def divImg(img_cv2, save_file=False):
     thresh = 200
 
     # 读入图片（色彩），仅用于最后输出
-    img_o = cv2.imread(img_path, 1)
+    img_o = img_cv2.copy()
 
     # 读入图片（灰度），用于切块识别等
-    img = cv2.imread(img_path, 0)
+    img = cv2.cvtColor(img_cv2, cv2.COLOR_BGR2GRAY)
 
     # 锐化图像（灰度）
     img = cv2.filter2D(img, -1, kernel=np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]]))
