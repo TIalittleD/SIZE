@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from PIL import Image, ImageDraw, ImageFont
+import os
 import numpy as np
 import cv2
 import CNN_Model
@@ -92,5 +93,5 @@ def process_image():
 
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 80)))
 
