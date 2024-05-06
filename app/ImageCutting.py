@@ -4,6 +4,7 @@ import os
 import shutil
 import matplotlib.pyplot as plt
 
+
 # 一行图片的X轴投影
 def img_x_shadow(img_b):
     ### 计算投影 ###
@@ -17,6 +18,7 @@ def img_x_shadow(img_b):
                 a[i] += 1
     return a
 
+
 # 整幅图片的Y轴投影
 def img_y_shadow(img_b):
     ### 计算投影 ###
@@ -29,6 +31,7 @@ def img_y_shadow(img_b):
             if img_b[i, j] == 255:
                 a[i] += 1
     return a
+
 
 # 图片获取文字块，传入投影列表，返回标记的数组区域坐标[[左，上，右，下]]，用于切行
 def img2rows(a, w, h):
@@ -51,6 +54,7 @@ def img2rows(a, w, h):
 
     return mark_boxs
 
+
 # 图片获取文字块，传入图片路径，返回标记的数组区域坐标[[左，上，右，下]]，用于从行切块
 def row2blocks(a, w, h):
     #根据投影切分图块
@@ -72,6 +76,7 @@ def row2blocks(a, w, h):
             box = [left, 0, right, h]
             block_mark_boxs.append(box)
     return block_mark_boxs
+
 
 # 图片获取文字块，传入图片路径，返回标记的数组区域坐标[[左，上，右，下]]，用于从块切字
 def block2chars(a, w, h, row_top, block_left):
@@ -97,6 +102,7 @@ def block2chars(a, w, h, row_top, block_left):
             ads_box = [block_left + left, row_top, block_left + right, row_top + h]
             abs_char_mark_boxs.append(ads_box)
     return char_mark_boxs, abs_char_mark_boxs
+
 
 # 转化为方形图片
 def get_square_img(image):
@@ -135,6 +141,7 @@ def get_square_img(image):
 
     return img_large
 
+
 # 裁剪图片
 def cut_img(img, mark_boxs, is_square=False):
     img_items = []
@@ -147,6 +154,7 @@ def cut_img(img, mark_boxs, is_square=False):
             img_item = get_square_img(img_item)
         img_items.append(img_item)
     return img_items
+
 
 # 保存图片
 def save_imgs(dir_name, imgs):
@@ -162,6 +170,7 @@ def save_imgs(dir_name, imgs):
         img_paths.append(file_path)
 
     return img_paths
+
 
 # 图像切割，获取块的轮廓
 def divImg(img_path, save_file=False):
@@ -195,6 +204,7 @@ def divImg(img_path, save_file=False):
         # 二值化一行的图，用于切块
         ret, row_img_b = cv2.threshold(row_img, thresh, 255, cv2.THRESH_BINARY_INV)
         kernel = np.ones((3, 3), np.uint8)
+
         # 图像膨胀6次
         row_img_b_d = cv2.dilate(row_img_b, kernel, iterations=6)
         img_x_shadow_a = img_x_shadow(row_img_b_d)
