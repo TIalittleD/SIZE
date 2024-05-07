@@ -6,3 +6,6 @@ COPY ./app /app
 
 # 安装应用的依赖
 RUN pip install --no-cache-dir -r /app/tmp/requirements.txt
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
